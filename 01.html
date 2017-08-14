@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>面向对象</title>
+</head>
+<body>
+
+</body>
+<script>
+// 创建对象
+	// 早期最简单方式
+	var person=new Person();
+	person.name="jkt";
+	person.age=20;
+	person.sex="girl";
+	person.sayName=function(){
+		alert(this.name);
+	};
+	// 字面量方式创建
+	var animal={
+		name: 'kele',
+		age: 5,
+		type: 'dog',
+		sayName: function(){
+			alert(this.name);
+		}
+	};
+	animal.sayName();
+	// 缺点：使用同一个接口创建很多对象，会产生大量重复代码。
+	// 所以，工厂模式创建对象
+	function createanimal(name,age,type){
+		// 显示创建对象
+		var o=new Object();
+		o.name=name;
+		o.age=age;
+		o.type=type;
+		o.sayName=function(){
+			alert(this.name);
+		};
+		// 必须返回
+		return o;
+	}
+	// 每个对象都有自己的一套函数
+	var animal1=createanimal("kele",5,"dog");
+	var animal2=createanimal("boss",6,"dog");
+	animal1.sayName();            //"kele"
+	// 缺点：没有解决对象识别的问题
+	// 所以：构造函数模式创建对象
+	function Animal(name,age,type){      //构造函数始终以大写字母开头
+		// 没有显示地创建对象
+		// 直接将属性和方法赋给了this对象
+		// 没有return语句
+		this.name=name;
+		this.age=age;
+		this.type=type;
+		this.sayName=function(){
+			alert(this.name);
+		};
+	}
+	// 创建Person的新实例：
+	// （1）创建一个新对象;
+	// （2）将构造函数的作用域赋给新对象
+	// （3）执行构造函数代码（为新对象添加属性）
+	// （4）返回新对象
+	var animal1=new Animal("kele",5,"dog");
+	var animal2=new Animal("boss",6,"dog");
+	animal2.sayName();           //"boss"
+	alert(animal1.constructor==Animal);     //true
+	alert(animal2.constructor==Animal);     //true
+// 原型prototype（扩展属性和方法）
+// 	所有函数对象都有prototype属性，该属性是一个指针，指向函数的原型对象。
+// 	而这个prototype对象包含所有实例对象共享的属性和方法。
+// 	prototype就是通过调用构造函数而创建的那个对象实例的原型对象。
+// 	所有prototype对象都有一个constructor属性指向其构造函数。
+// 	所有对象都有_proto_(隐性原型)，即当调用构造函数创建一个新实例后，该实例内部将包含一个指针指向构造函数的原型对象，所以：
+	arr._proto_===Array.prototype;
+// 	每一个原型都可以拥有自己原型的隐式引用（该原型的原型）——————原形链
+// 	通过构造函数可以继续为原型对象添加属性和方法，如下：
+	function Animal(){
+		Animal.prototype.name="kele";
+		Animal.prototype.age=5;
+		Animal.prototype.type="dog";
+		Animal.prototype.sayName=function(){
+			alert(this.name);
+		};
+	}
+	// 构造函数此刻变成了空函数
+	var animal1=new Animal();
+	animal1.sayName();    //"kele"
+	var animal2=new Animal();   //"kele"
+	animal2.sayName();
+	alert(animal1.sayName == animal2.sayName);   //true
+// 继承：由于函数没有签名，在ECMA中无法实现接口继承。所以ECMAScript只支持实现继承，而且其实现继承主要依靠原形链来实现。
+	// 用原形链实现继承：prototype对象的所有属性和方法都被传递给那个类的所有实例
+	// 主要实现：让构造函数的原型对象（子类）等于另一个类（父类）的实例
+	function SuperType(){
+		this.property=true;
+	}
+	// 给超类添加一个方法
+	SuperType.prototype.getSuperValue=function(){
+		return this.property;
+	};
+	function SubType(){
+		this.subproperty=false;
+	}
+	// 继承SuperType
+	SubType.prototype=new SuperType();
+	// 子类添加一个方法
+	SubType.prototype.getSubValue=function(){
+		return this.subproperty;
+	};
+	var instance=new SubType();
+	// 子类可以调用超类的方法
+	alert(instance.getSuperValue());       //true
+	// 子类自己添加的方法也在
+	alert(instance.getSubValue());         //false
+	alert(instance.constructor==SubType);    //false
+	alert(instance.constructor==SuperType);    //true
+	// 缺点：原型属性会被所有实例共享、创建子类的实例时不能向超类的构造函数中传参
+	// 
+	// 但构造函数实现继承：可以传参
+	// 思想：在子类型构造函数内部调用超类的构造函数：apply() call()
+	function SuperType(){
+		this.colors=["red","blue","green"];
+	}
+	function SubType(){
+		// 继承SuperType
+		SuperType.call(this);     //把所有属性方法传给子类
+	}
+	var instance1=new SubType();
+	instance1.colors.push("black");
+	alert(instance1.colors);      //red,blue,green,black
+
+	var instance2=new SubType();
+	alert(instance2.colors); //red,blue,green 原形链返回的是red,blue,green,black
+	// 传参
+	function SuperType(name){   //这里了参数，下面才会传参
+		this.name=name;
+	}
+	function SubType(){
+		// 继承SuperType,同时还传了参
+		SuperType.call(this,"jkt");  
+		// 实例属性:应在调用超类构造函数后，添加子类中定义的属性
+		this.age=20; 
+	}
+	var instance=new SubType();
+	alert(instance.name);     //"jkt"
+	alert(instance.age);       //20
+	// 缺点1：方法都在构造函数中,函数不能复用.
+	// 在超类原型中定义的方法,子类也不可见(因为子类的原型=超类的实例).所以方法之能在构造函数中
+	// 缺点2：没有原型
+	// 
+	// 所以：使用组合继承：用构造函数定义属性，原型定义方法
+	function SuperType(name){
+		this.name=name;
+		this.colors=["red","blue","green"];
+	}
+	SuperType.prototype.sayName=function(){
+		alert(this.name);
+	};
+	function SubType(name,age){
+		// 继承属性
+		SuperType.call(this,name);
+		this.age=age;
+	}
+	// 继承方法
+	SubType.prototype=new SuperType();
+	SubType.prototype.constructor=SubType;
+	SubType.prototype.sayAge=function(){
+		alert(this.age);
+	};
+	var instance1=new SubType("JKT",20);
+	instance1.colors.push("black");
+	alert(instance1.colors);    //red,blue,green,black
+	instance1.sayName();      //"JKT"
+	instance1.sayAge();       // 20
+
+	var instance2=new SubType("lele",21);
+	// 两个实例分别有自己的属性
+	alert(instance2.colors);       //red,blue,green
+	// 两个实例可以使用相同的方法
+	instance2.sayName();            //"lele"
+	instance2.sayAge();            //21
+
+
+
+
+
+</script>
+</html>
